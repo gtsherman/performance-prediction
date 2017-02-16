@@ -1,0 +1,7 @@
+res/clusters/
+src/qpp/target/
+.settings/
+.classpath
+.project
+*.pyc
+compileAndUpload.sh
