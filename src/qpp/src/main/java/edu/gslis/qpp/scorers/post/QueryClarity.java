@@ -19,6 +19,10 @@ public class QueryClarity {
 	}
 	
 	public static double score(GQuery query, IndexWrapper index, Stopper stopper, int fbDocs, int fbTerms) {
+		if (stopper != null) {
+			query.applyStopper(stopper);
+		}
+
 		IndexBackedCollectionStats collectionStats = new IndexBackedCollectionStats();
 		collectionStats.setStatSource(index);
 		
@@ -27,14 +31,8 @@ public class QueryClarity {
 		RM1Builder rm1 = new StandardRM1Builder(fbDocs, fbTerms, collectionStats);
 		FeatureVector queryModel = rm1.buildRelevanceModel(
 				query, index.runQuery(query, fbDocs), stopper);
-		queryModel.normalize();
 		
-		double clarity = 0.0;
-		for (String term : queryModel) {
-			double colProb = (1.0 + collectionStats.termCount(term)) / collectionStats.getTokCount();
-			clarity += queryModel.getFeatureWeight(term) * Math.log(queryModel.getFeatureWeight(term) / colProb);
-		}
-		return clarity;
+		return queryModel.clarity(index);
 	}
 
 }
