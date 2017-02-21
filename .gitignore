@@ -3,5 +3,6 @@ src/qpp/target/
 .settings/
 .classpath
 .project
+.idea/
 *.pyc
 compileAndUpload.sh

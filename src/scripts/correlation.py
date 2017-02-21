@@ -28,19 +28,24 @@ def main():
             parts = line.strip().split()
             f2[parts[0]] = float(parts[1])
 
+    print(correlate(f1, f2, cor))
+
+
+def correlate(f1, f2, cor):
     f1_order, f2_order = [], []
     for k in f1:
         if k not in f2:
-            print('{} not in {}'.format(k, args.input[1]))
+            print('{} not in first file'.format(k))
             exit()
         f1_order.append(f1[k])
         f2_order.append(f2[k])
     for k in f2:
         if k not in f1:
-            print('{} not in {}'.format(k, args.input[0]))
+            print('{} not in second file'.format(k))
             exit()
 
-    print(str(cor(f1_order, f2_order)[0]))
+    return cor(f1_order, f2_order)[0]
+
 
 if __name__ == '__main__':
     main()
