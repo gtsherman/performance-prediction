@@ -34,6 +34,8 @@ def main():
     required.add_argument('-m', '--metric', choices=[_map, _ndcg], help='metric to use', required=True)
     options.add_argument('-q', '--query-retrieval', help='query retrieval file; same as --target-retrieval by default')
     options.add_argument('-n', '--n', type=int, help='number of clustered documents to include; same as --k by default')
+    options.add_argument('-p', '--p', type=int, help='number of query retrieval results to include; same as --k by '
+                                                     'default')
     options.add_argument('-v', '--verbose', action='store_true', help='verbose output')
     args = options.parse_args()
 
@@ -47,6 +49,8 @@ def main():
         args.query_retrieval = args.target_retrieval
     if not args.n:
         args.n = args.k
+    if not args.p:
+        args.p = args.k
 
     stderr('Running target {}, performance {}, with k={}'.format(args.target_retrieval, args.query_retrieval,
                                                                  str(args.k)))
@@ -68,9 +72,9 @@ def main():
     # Create pseudo-qrels based on the performance index
     pseudo_qrels = Qrels()
     for query in query_results.results:
-        top_k = query_results.results[query][:args.k]
-        total_score = sum([result.score for result in top_k])
-        for doc in top_k:
+        top_p = query_results.results[query][:args.p]
+        total_score = sum([result.score for result in top_p])
+        for doc in top_p:
             pseudo_qrels.qrels[query][doc.docno] = doc.score / total_score
 
     for query in target_results.results:

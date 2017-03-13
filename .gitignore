@@ -1,5 +1,7 @@
 res/clusters/
 src/qpp/target/
+src/script/cross_validation/
+src/scripts/tools/
 .settings/
 .classpath
 .project

@@ -1,0 +1,1 @@
+for i in `ls`; do ~/Spring\ 2017/Research/qpp/src/scripts/correlation.py -i ~/Spring\ 2017/Research/qpp/data/wt10g/results/raw.stopped.ndcg_cut_20 $i -c kendall > ~/Spring\ 2017/Research/qpp/out/wt10g/correlated/feedback/ndcg.kendall/$i; done &

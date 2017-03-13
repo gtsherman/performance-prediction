@@ -1,0 +1,72 @@
+AP_clarity_cor_map_pearson
+75 100 0.614842755759
+AP_clarity_cor_map_kendall
+75 75 0.443972941484
+AP_clarity_cor_ndcg_pearson
+50 100 0.428410865695
+AP_clarity_cor_ndcg_kendall
+20 50 0.280678251661
+AP_feedback_cor_map_pearson
+75 20 0.563709710367
+AP_feedback_cor_map_kendall
+75 20 0.42146551351
+AP_feedback_cor_ndcg_pearson
+10 5 0.44671676896
+AP_feedback_cor_ndcg_kendall
+10 5 0.309987596439
+AP_pseudoScore_cor_map_pearson
+100 1 75 0.611548804752
+AP_pseudoScore_cor_map_kendall
+100 1 75 0.496207265055
+AP_pseudoScore_cor_ndcg_pearson
+100 5 20 0.488023169756
+AP_pseudoScore_cor_ndcg_kendall
+100 1 50 0.33782718088
+robust_clarity_cor_map_pearson
+100 100 0.511356799794
+robust_clarity_cor_map_kendall
+100 20 0.371366103736
+robust_clarity_cor_ndcg_pearson
+50 100 0.391374994031
+robust_clarity_cor_ndcg_kendall
+100 20 0.288940488398
+robust_feedback_cor_map_pearson
+20 15 0.507335763539
+robust_feedback_cor_map_kendall
+20 15 0.374522402162
+robust_feedback_cor_ndcg_pearson
+20 15 0.492580472385
+robust_feedback_cor_ndcg_kendall
+10 15 0.364571165405
+robust_pseudoScore_cor_map_pearson
+20 5 20 0.579105913361
+robust_pseudoScore_cor_map_kendall
+100 5 10 0.427305572246
+robust_pseudoScore_cor_ndcg_pearson
+100 5 10 0.504722933461
+robust_pseudoScore_cor_ndcg_kendall
+10 5 10 0.363365536724
+wt10g_clarity_cor_map_pearson
+10 10 0.363611457994
+wt10g_clarity_cor_map_kendall
+10 5 0.309310252965
+wt10g_clarity_cor_ndcg_pearson
+10 5 0.343646522702
+wt10g_clarity_cor_ndcg_kendall
+10 5 0.26221131676
+wt10g_feedback_cor_map_pearson
+10 5 0.384746005663
+wt10g_feedback_cor_map_kendall
+10 10 0.284271682983
+wt10g_feedback_cor_ndcg_pearson
+10 5 0.36127257327
+wt10g_feedback_cor_ndcg_kendall
+10 10 0.241093142324
+wt10g_pseudoScore_cor_map_pearson
+20 1 10 0.461492024758
+wt10g_pseudoScore_cor_map_kendall
+100 10 1 0.364244064953
+wt10g_pseudoScore_cor_ndcg_pearson
+100 10 5 0.417341429729
+wt10g_pseudoScore_cor_ndcg_kendall
+100 10 1 0.305321861393

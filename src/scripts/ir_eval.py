@@ -67,12 +67,10 @@ def average_precision(query, search_results, qrels):
 
 def mean_average_precision(batch_search_results, qrels):
     map = 0.0
-
-    for query in batch_search_results.results:
-        map += average_precision(query, batch_search_results.results[query], qrels)
-
-    map /= len(batch_search_results.results)
-
+    if batch_search_results.results:
+        for query in batch_search_results.results:
+            map += average_precision(query, batch_search_results.results[query], qrels)
+        map /= len(batch_search_results.results)
     return map
 
 
@@ -122,9 +120,10 @@ ndcg = normalized_discounted_cumulative_gain
 
 def average_normalized_discounted_cumulative_gain(batch_search_results, qrels, rank_cutoff=20):
     avg = 0.0
-    for query in batch_search_results.results:
-        avg += normalized_discounted_cumulative_gain(query, batch_search_results.results[query], qrels, rank_cutoff)
-    avg /= len(batch_search_results.results)
+    if batch_search_results.results:
+        for query in batch_search_results.results:
+            avg += normalized_discounted_cumulative_gain(query, batch_search_results.results[query], qrels, rank_cutoff)
+        avg /= len(batch_search_results.results)
     return avg
 
 
