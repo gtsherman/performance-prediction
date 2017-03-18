@@ -2,6 +2,7 @@
 
 import argparse
 import collections
+import logging
 import math
 
 
@@ -10,22 +11,52 @@ class Qrels(object):
         self.qrels = collections.defaultdict(dict)
 
     def relevance(self, query, document):
+        """
+        Get the relevance grade of a document for a query
+        :param query: The query name
+        :param document: The document name
+        :return: The relevance grade (number) of the document for the query
+        """
         return (self.qrels[query][document]
                 if query in self.qrels and document in self.qrels[query] else 0)
 
     def relevant(self, query, document):
+        """
+        Get whether the document is relevant to the query
+        :param query: The query name
+        :param document: The document name
+        :return: A boolean of whether the document is relevant to the query
+        """
         return self.relevance(query, document) > 0
 
     def num_relevant(self, query):
+        """
+        Get the number of relevant documents to the query
+        :param query: The query name
+        :return: The number of relevant documents
+        """
         return len(self.qrels[query])
 
     def read(self, file):
-        with open(file) as f:
-            for line in f:
-                parts = line.split()
-                query, document, score = parts[0], parts[2], parts[3]
-                if float(score) > 0:
-                    self.qrels[query][document] = score
+        """
+        Read a qrels file and store the data
+        :param file: The file path
+        """
+        try:
+            with open(file) as f:
+                for line in f:
+                    parts = line.split()
+                    try:
+                        query, document, score = parts[0], parts[2], parts[3]
+                        if float(score) > 0:
+                            self.qrels[query][document] = score
+                    except IndexError:
+                        logging.warning('This line does not appear to be from a valid qrels file:')
+                        logging.warning(line)
+                    except ValueError:
+                        logging.warning('The score field ({}) does not appear to be a valid number.'.format(score))
+        except IOError:
+            logging.error('File {} could not be read.'.format(file))
 
 
 class SearchResult(object):
@@ -38,17 +69,53 @@ class BatchSearchResults(object):
     def __init__(self):
         self.results = collections.defaultdict(list)
 
+    def add(self, query, document, score):
+        """
+        Add a <query, document, score> tuple and optionally resort the documents for this query
+        :param query: The query name
+        :param document: The document name
+        :param score: The retrieval score of the document for the query
+        """
+        self.results[query].append(SearchResult(document, score))
+
+    def rank(self, query):
+        """
+        Sort the documents in descending order by their retrieval score
+        :param query: The query to sort
+        """
+        if query not in self.results:
+            logging.warning('Asked to rank documents in query {}, but this query is not present in the batch '
+                            'results.'.format(query))
+            return
+        self.results[query].sort(key=lambda d: d.score, reverse=True)
+
     def read(self, file):
-        with open(file) as f:
-            for line in f:
-                parts = line.split()
-                query, document, score = parts[0], parts[2], float(parts[4])
-                self.results[query].append(SearchResult(document, score))
+        """
+        Read a TREC output file and store the data
+        :param file: The file path
+        """
+        try:
+            with open(file) as f:
+                for line in f:
+                    parts = line.split()
+                    try:
+                        query, document, score = parts[0], parts[2], float(parts[4])
+                        self.add(query, document, score)
+                    except IndexError:
+                        logging.warning('This line does not appear to be from a TREC output file:')
+                        logging.warning(line)
+                    except ValueError:
+                        logging.warning('The score field ({}) does not appear to be a valid number.'.format(score))
+        except IOError:
+            logging.error('File {} could not be read.'.format(file))
 
 """MAP"""
 
 
-def average_precision(query, search_results, qrels):
+def average_precision(query, search_results, qrels, rank_cutoff=None):
+    if rank_cutoff:
+        search_results = search_results[:rank_cutoff]
+
     ap = 0.0
     rels = 0
 
@@ -65,11 +132,11 @@ def average_precision(query, search_results, qrels):
     return ap
 
 
-def mean_average_precision(batch_search_results, qrels):
+def mean_average_precision(batch_search_results, qrels, rank_cutoff=None):
     map = 0.0
     if batch_search_results.results:
         for query in batch_search_results.results:
-            map += average_precision(query, batch_search_results.results[query], qrels)
+            map += average_precision(query, batch_search_results.results[query], qrels, rank_cutoff)
         map /= len(batch_search_results.results)
     return map
 
@@ -84,9 +151,12 @@ def _dcg_at_rank(relevance, rank):
     return
 
 
-def discounted_cumulative_gain(query, search_results, qrels, rank_cutoff=20):
+def discounted_cumulative_gain(query, search_results, qrels, rank_cutoff=None):
+    if rank_cutoff:
+        search_results = search_results[:rank_cutoff]
+
     dcg = 0.0
-    for i, search_result in enumerate(search_results[:rank_cutoff]):
+    for i, search_result in enumerate(search_results):
         dcg += (math.pow(2, float(qrels.relevance(query, search_result.docno)))-1) / math.log(float(i)+2)
     return dcg
 
@@ -95,7 +165,7 @@ def discounted_cumulative_gain(query, search_results, qrels, rank_cutoff=20):
 dcg = discounted_cumulative_gain
 
 
-def ideal_discounted_cumulative_gain(query, qrels, rank_cutoff=20):
+def ideal_discounted_cumulative_gain(query, qrels, rank_cutoff=None):
     rels = qrels.qrels.get(query, {})
     docs_in_order = sorted(rels, key=rels.get, reverse=True)
     ideal_results = [SearchResult(doc, i) for i, doc in enumerate(docs_in_order)]
@@ -106,7 +176,7 @@ def ideal_discounted_cumulative_gain(query, qrels, rank_cutoff=20):
 idcg = ideal_discounted_cumulative_gain
 
 
-def normalized_discounted_cumulative_gain(query, search_results, qrels, rank_cutoff=20):
+def normalized_discounted_cumulative_gain(query, search_results, qrels, rank_cutoff=None):
     dcg = discounted_cumulative_gain(query, search_results, qrels, rank_cutoff)
     idcg = ideal_discounted_cumulative_gain(query, qrels, rank_cutoff)
     if idcg == 0:
@@ -118,7 +188,7 @@ def normalized_discounted_cumulative_gain(query, search_results, qrels, rank_cut
 ndcg = normalized_discounted_cumulative_gain
 
 
-def average_normalized_discounted_cumulative_gain(batch_search_results, qrels, rank_cutoff=20):
+def average_normalized_discounted_cumulative_gain(batch_search_results, qrels, rank_cutoff=None):
     avg = 0.0
     if batch_search_results.results:
         for query in batch_search_results.results:
@@ -141,7 +211,7 @@ def main():
     required.add_argument('-r', '--results', help='search results file', required=True)
     required.add_argument('-m', '--metric', choices=[_map, _ndcg], help='evaluation metric', required=True)
     options.add_argument('-t', '--topic', help='specific topic to evaluate')
-    options.add_argument('-c', '--cutoff', type=int, help='rank cutoff, for use with certain metrics')
+    options.add_argument('-c', '--cutoff', type=int, help='rank cutoff')
     args = options.parse_args()
 
     qrels = Qrels()
@@ -150,24 +220,22 @@ def main():
     results = BatchSearchResults()
     results.read(args.results)
 
-    cutoff = args.cutoff if args.cutoff else 20
-
     if args.topic:
         if args.topic not in results.results:
             print('Topic {} not present in results'.format(args.topic))
             exit()
+
         if args.metric == _map:
-            print('Average precision: {}'.format(str(average_precision(args.topic, results.results[args.topic],
+            print('ap: {}'.format(str(average_precision(args.topic, results.results[args.topic],
                                                                        qrels))))
         elif args.metric == _ndcg:
-            print('nDCG@{}: {}'.format(str(cutoff), str(normalized_discounted_cumulative_gain(args.topic,
-                results.results[args.topic], qrels, cutoff))))
+            print('nDCG: {}'.format(str(normalized_discounted_cumulative_gain(args.topic, results.results[args.topic],
+                                                                              qrels, args.cutoff))))
     else:
         if args.metric == _map:
-            print('Mean average precision: {}'.format(str(mean_average_precision(results, qrels))))
+            print('map: {}'.format(str(mean_average_precision(results, qrels))))
         elif args.metric == _ndcg:
-            print('Average nDCG@{}: {}'.format(str(cutoff), str(average_normalized_discounted_cumulative_gain(
-                results, qrels, cutoff))))
+            print('nDCG: {}'.format(str(average_normalized_discounted_cumulative_gain(results, qrels, args.cutoff))))
 
 if __name__ == '__main__':
     main()
